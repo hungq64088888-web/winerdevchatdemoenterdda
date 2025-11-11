@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App - Kết Bạn & Nhắn Tin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-box h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .auth-box input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .auth-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .switch-auth {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .switch-auth a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Main Screen */
+        #mainScreen.active {
+            display: block;
+            padding: 0;
+        }
+
+        .header {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h2 {
+            color: #667eea;
+            font-size: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-left span {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            background: #f0f0f0;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        .btn-icon:hover {
+            background: #667eea;
+            transform: scale(1.1);
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h3 {
+            color: #333;
+        }
+
+        .btn-add {
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-add:hover {
+            transform: rotate(90deg);
+        }
+
+        .friends-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            gap: 15px;
+        }
+
+        .friend-item:hover {
+            background: #f5f5f5;
+        }
+
+        .friend-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .friend-item.active .avatar {
+            background: white;
+            color: #667eea;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f9f9f9;
+        }
+
+        .chat-welcome {
+            display: none;
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #999;
+        }
+
+        .chat-welcome.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-welcome h2 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .chat-box {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-box.active {
+            display: flex;
+        }
+
+        .chat-header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-user-info span {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            animation: messageSlide 0.3s ease;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received {
+            background: white;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .message-input-container {
+            background: white;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input-container input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+
+        .message-input-container input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-send {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-send:hover {
+            transform: scale(1.1);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: #333;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .btn-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-body input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .search-results {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            transition: all 0.3s;
+        }
+
+        .search-result-item:hover {
+            background: #f0f0f0;
+        }
+
+        .search-result-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-result-details h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .search-result-details p {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .btn-add-friend {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-add-friend:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                max-width: 350px;
+            }
+            
+            .chat-area {
+                display: none;
+            }
+            
+            .chat-area.mobile-show {
+                display: flex;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                z-index: 100;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Màn hình đăng nhập -->
+    <div id="loginScreen" class="screen active">
+        <div class="container">
+            <div class="auth-box">
+                <h1>🎉 Chat App</h1>
+                <form id="loginForm">
+                    <input type="text" id="loginUsername" placeholder="Tên đăng nhập" required>
+                    <input type="password" id="loginPassword" placeholder="Mật khẩu" required>
+                    <button type="submit" class="btn-primary">Đăng nhập</button>
+                </form>
+                <p class="switch-auth">Chưa có tài khoản? <a href="#" onclick="switchToRegister()">Đăng ký ngay</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Màn hình đăng ký -->
+    <div id="registerScreen" class="screen">
+        <div class="container">
+            <div class="auth-box">
+                <h1>📝 Đăng ký tài khoản</h1>
+                <form id="registerForm">
+                    <input type="text" id="regUsername" placeholder="Tên đăng nhập" required>
+                    <input type="text" id="regDisplayName" placeholder="Tên hiển thị" required>
+                    <input type="password" id="regPassword" placeholder="Mật khẩu" required>
+                    <button type="submit" class="btn-primary">Tạo tài khoản</button>
+                </form>
+                <p class="switch-auth">Đã có tài khoản? <a href="#" onclick="switchToLogin()">Đăng nhập</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Màn hình chat chính -->
+    <div id="mainScreen" class="screen">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h2>💬 Chat App</h2>
+                <span id="currentUserName"></span>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" onclick="showSearchFriends()" title="Tìm bạn bè">
+                    <span>👥</span>
+                </button>
+                <button class="btn-icon" onclick="logout()" title="Đăng xuất">
+                    <span>🚪</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- Sidebar - Danh sách bạn bè -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h3>Bạn bè</h3>
+                    <button class="btn-add" onclick="showSearchFriends()">+</button>
+                </div>
+                <div id="friendsList" class="friends-list">
+                    <p class="empty-message">Chưa có bạn bè. Nhấn + để kết bạn!</p>
+                </div>
+            </div>
+
+            <!-- Khu vực chat -->
+            <div class="chat-area">
+                <div id="chatWelcome" class="chat-welcome active">
+                    <h2>👋</h2>
+                    <h2>Chào mừng đến Chat App!</h2>
+                    <p>Chọn một bạn bè để bắt đầu trò chuyện</p>
+                </div>
+
+                <div id="chatBox" class="chat-box">
+                    <div class="chat-header">
+                        <div class="chat-user-info">
+                            <div class="avatar"></div>
+                            <span id="chatUserName"></span>
+                        </div>
+                    </div>
+
+                    <div id="messagesContainer" class="messages-container">
+                        <!-- Messages will be inserted here -->
+                    </div>
+
+                    <div class="message-input-container">
+                        <input type="text" id="messageInput" placeholder="Nhập tin nhắn..." onkeypress="handleKeyPress(event)">
+                        <button class="btn-send" onclick="sendMessage()">
+                            <span>📤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal tìm kiếm bạn bè -->
+    <div id="searchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔍 Tìm bạn bè</h3>
+                <button class="btn-close" onclick="closeSearchModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="searchInput" placeholder="Nhập tên hoặc ID..." oninput="searchUsers()">
+                <div id="searchResults" class="search-results">
+                    <!-- Search results will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
